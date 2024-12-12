@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Conexiones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Monitor de Conexiones</h1>
+        <button class="btn" onclick="sendTestLog()">Enviar Registro de Prueba</button>
+        <div id="logs">
+            <p class="no-data">Cargando registros...</p>
+        </div>
+    </div>
+
+    <script>
+        const endpoint = 'log_remote.php'; // Cambia a la URL de tu endpoint si está en un servidor remoto.
+
+        // Función para cargar registros desde el servidor
+        async function loadLogs() {
+            try {
+                const response = await fetch(endpoint, { method: 'GET' });
+                if (!response.ok) throw new Error('Error al obtener los registros');
+                
+                const logs = await response.json();
+                renderLogs(logs);
+            } catch (error) {
+                document.getElementById('logs').innerHTML = <p class="no-data">No se pudieron cargar los registros: ${error.message}</p>;
+            }
+        }
+
+        // Función para enviar un registro de prueba
+        async function sendTestLog() {
+            const testMessage = { message: "🟢 Conexión de prueba desde 127.0.0.1" };
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testMessage)
+                });
+                const result = await response.json();
+                alert(result.message);
+                loadLogs(); // Recarga los registros después de enviar el log
+            } catch (error) {
+                alert('Error al enviar el registro: ' + error.message);
+            }
+        }
+
+        // Función para renderizar los registros en la tabla
+        function renderLogs(logs) {
+            if (logs.length === 0) {
+                document.getElementById('logs').innerHTML = '<p class="no-data">No hay registros disponibles.</p>';
+                return;
+            }
+
+            let table = '<table>';
+            table += '<thead><tr><th>Fecha y Hora</th><th>Mensaje</th></tr></thead>';
+            table += '<tbody>';
+            logs.forEach(log => {
+                table += <tr><td>${log.timestamp}</td><td>${log.message}</td></tr>;
+            });
+            table += '</tbody></table>';
+            document.getElementById('logs').innerHTML = table;
+        }
+
+        // Carga los registros al iniciar la página
+        loadLogs();
+    </script>
+</body>
+</html>
